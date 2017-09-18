@@ -1,27 +1,34 @@
+GTEST=D:\git\googletest
+
 !IF "$(PLATFORM)"=="X64" || "$(PLATFORM)"=="x64"
 ARCH=amd64
+O_GTEST=$(GTEST)\build64\googlemock\gtest\Release
+O_GMOCK=$(GTEST)\build64\googlemock\Release
 !ELSE
 ARCH=x86
+O_GTEST=$(GTEST)\build32\googlemock\gtest\Release
+O_GMOCK=$(GTEST)\build32\googlemock\Release
 !ENDIF
 
-OUTDIR=..\$(ARCH)
+OUTDIR=$(ARCH)
 OBJDIR=$(ARCH)
 
 CC=cl
 RD=rd /s /q
 RM=del /q
 LINKER=link
-TARGET=gui.exe
+TARGET=t.exe
 
 OBJS=\
-	$(OBJDIR)\main.obj\
-	$(OBJDIR)\gui.res\
+	$(OBJDIR)\blob-test.obj\
 
 LIBS=\
 	advapi32.lib\
 	crypt32.lib\
 	gdi32.lib\
-	..\$(ARCH)\common.lib\
+	..\src\$(ARCH)\common.lib\
+	gtest.lib\
+	gtest_main.lib\
 
 CFLAGS=\
 	/nologo\
@@ -33,28 +40,28 @@ CFLAGS=\
 	/EHsc\
 	/Fo"$(OBJDIR)\\"\
 	/Fd"$(OBJDIR)\\"\
+	/I..\src\common\
+	/I$(GTEST)\googlemock\include\
+	/I$(GTEST)\googletest\include\
 
 LFLAGS=\
 	/NOLOGO\
 	/DEBUG\
-	/SUBSYSTEM:WINDOWS\
+	/SUBSYSTEM:CONSOLE\
+	/LIBPATH:$(O_GTEST)\
+	/LIBPATH:$(O_GMOCK)\
 
 all: $(OUTDIR)\$(TARGET)
 
 $(OUTDIR)\$(TARGET): $(OBJS)
 	@if not exist $(OUTDIR) mkdir $(OUTDIR)
+	@if not exist ..\src\$(ARCH)\common.lib\
+		@pushd ..\src\common & nmake /nologo & popd
 	$(LINKER) $(LFLAGS) $(LIBS) /PDB:"$(@R).pdb" /OUT:$@ $**
 
 .cpp{$(OBJDIR)}.obj:
 	@if not exist $(OBJDIR) mkdir $(OBJDIR)
 	$(CC) $(CFLAGS) $<
 
-.rc{$(OBJDIR)}.res:
-	@if not exist $(OBJDIR) mkdir $(OBJDIR)
-	rc /nologo /fo "$@" $<
-
 clean:
 	@if exist $(OBJDIR) $(RD) $(OBJDIR)
-	@if exist $(OUTDIR)\$(TARGET) $(RM) $(OUTDIR)\$(TARGET)
-	@if exist $(OUTDIR)\$(TARGET:exe=ilk) $(RM) $(OUTDIR)\$(TARGET:exe=ilk)
-	@if exist $(OUTDIR)\$(TARGET:exe=pdb) $(RM) $(OUTDIR)\$(TARGET:exe=pdb)

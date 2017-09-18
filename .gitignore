@@ -1,4 +1,2 @@
-bin32/
-bin64/
-obj32/
-obj64/
+x86/
+amd64/
